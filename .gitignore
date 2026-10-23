@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.env
+.venv/
+venv/
+env/
+.DS_Store
+.idea/
+.vscode/
+.lazyfile/
+operations.jsonl

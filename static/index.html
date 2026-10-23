@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="LazyFile is a local-first file organizer with a safe preview, rule-based suggestions, and optional Ollama assistance.">
+  <meta name="color-scheme" content="dark">
+  <title>LazyFile · Slow and steady file organization</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <svg class="svg-defs" aria-hidden="true" focusable="false">
+    <symbol id="i-logo" viewBox="0 0 24 24">
+      <path d="M4.5 5.5h8.2l2.1 2.3h4.7v10.7h-15z"/>
+      <path d="M9 12.2c2.8-.2 4.9 1.4 5.6 4.2-2.8.2-4.9-1.4-5.6-4.2Z"/>
+    </symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24">
+      <path d="M3.5 6.5h6l2 2h9v10.5h-17z"/>
+    </symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24">
+      <path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/>
+      <circle cx="11" cy="11" r="3.2"/>
+      <path d="m13.4 13.4 2.8 2.8"/>
+    </symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.5"/>
+      <path d="M12 7.5V12l3 1.8"/>
+    </symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24">
+      <path d="M12 3.5 19 6v5.4c0 4.1-2.7 7.3-7 9.1-4.3-1.8-7-5-7-9.1V6z"/>
+      <path d="m8.8 12 2.1 2.1 4.4-4.5"/>
+    </symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24">
+      <path d="M12 3.5 13.5 8 18 9.5 13.5 11 12 15.5 10.5 11 6 9.5 10.5 8z"/>
+      <path d="m18.5 14 .7 2.1 2.1.7-2.1.7-.7 2.1-.7-2.1-2.1-.7 2.1-.7z"/>
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24">
+      <circle cx="10.8" cy="10.8" r="5.8"/>
+      <path d="m15 15 4 4"/>
+    </symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24">
+      <path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24">
+      <path d="m5 12.5 4.2 4.2L19 6.8"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24">
+      <path d="m6 6 12 12M18 6 6 18"/>
+    </symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24">
+      <path d="M19.5 8.5A8 8 0 1 0 20 15"/>
+      <path d="M19.5 4.5v4h-4"/>
+    </symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24">
+      <path d="M8.5 8H5V4.5"/>
+      <path d="M5.2 8.2A7.6 7.6 0 1 1 5 15"/>
+    </symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24">
+      <path d="M12 3.8 21 19.5H3z"/>
+      <path d="M12 9v4.5M12 16.8v.2"/>
+    </symbol>
+    <symbol id="i-file" viewBox="0 0 24 24">
+      <path d="M6 3.5h8l4 4v13H6z"/>
+      <path d="M14 3.5v4h4"/>
+    </symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24">
+      <path d="m7 9.5 5 5 5-5"/>
+    </symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24">
+      <rect x="5" y="10" width="14" height="10" rx="2"/>
+      <path d="M8 10V7.5a4 4 0 0 1 8 0V10"/>
+    </symbol>
+  </svg>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg class="icon"><use href="#i-logo"></use></svg>
+        </div>
+        <div class="brand-copy">
+          <span class="brand-name">LazyFile</span>
+          <span class="brand-tag">Slow &amp; steady</span>
+        </div>
+      </div>
+
+      <nav class="primary-nav" aria-label="Primary navigation">
+        <button class="nav-item is-active" type="button" data-view="workspace">
+          <svg class="icon"><use href="#i-folder"></use></svg>
+          <span>Workspace</span>
+        </button>
+        <button class="nav-item" type="button" data-view="activity">
+          <svg class="icon"><use href="#i-activity"></use></svg>
+          <span>Activity</span>
+          <span class="nav-badge" id="activity-badge" hidden>0</span>
+        </button>
+        <button class="nav-item" type="button" data-view="safety">
+          <svg class="icon"><use href="#i-shield"></use></svg>
+          <span>Safety</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+
+      <section class="ai-card" id="ai-card" aria-label="Local AI status">
+        <div class="ai-card-head">
+          <span class="status-dot is-checking" id="ai-dot"></span>
+          <span class="ai-mode" id="ai-mode">Checking local AI</span>
+          <button class="icon-btn" id="ai-refresh" type="button" title="Refresh AI status" aria-label="Refresh AI status">
+            <svg class="icon"><use href="#i-refresh"></use></svg>
+          </button>
+        </div>
+        <p class="ai-detail" id="ai-detail">The rule-based engine is always available. Ollama is optional.</p>
+      </section>
+
+      <div class="sidebar-foot">
+        <span class="local-badge">
+          <svg class="icon"><use href="#i-lock"></use></svg>
+          Local only
+        </span>
+        <p>No cloud. No deletions. No surprises.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title">
+          <span class="eyebrow">Local file organizer</span>
+          <h1 id="view-title">Workspace</h1>
+        </div>
+        <div class="topbar-actions">
+          <span class="status-chip" id="engine-chip">
+            <span class="dot"></span>
+            <span id="engine-label">Rule engine ready</span>
+          </span>
+        </div>
+      </header>
+
+      <section class="view" id="view-workspace">
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <span class="eyebrow hero-eyebrow"><span class="eyebrow-line"></span> Hacktoberfest 2026 · Slow and steady</span>
+            <h2 id="hero-title">Clear the pile,<br>not your peace of mind.</h2>
+            <p>LazyFile reads a single folder, proposes a calmer structure, and moves nothing until you approve each step.</p>
+          </div>
+          <div class="hero-safety" aria-label="Safety commitments">
+            <span class="hero-safety-title">Built to be boring</span>
+            <span class="safety-line"><svg class="icon"><use href="#i-check"></use></svg> Read-only scanning</span>
+            <span class="safety-line"><svg class="icon"><use href="#i-check"></use></svg> Preview before every move</span>
+            <span class="safety-line"><svg class="icon"><use href="#i-check"></use></svg> No deletes, no overwrites</span>
+            <span class="safety-line"><svg class="icon"><use href="#i-check"></use></svg> Undo after a real apply</span>
+          </div>
+        </section>
+
+        <form class="scan-card" id="scan-form">
+          <div class="scan-copy">
+            <span class="eyebrow">Step 1</span>
+            <h3>Choose one folder</h3>
+            <p>Scanning only reads file names and metadata. Start with Downloads, or a copy of it.</p>
+          </div>
+          <div class="scan-controls">
+            <label class="sr-only" for="dir-input">Folder path to scan</label>
+            <div class="path-field">
+              <svg class="icon" aria-hidden="true"><use href="#i-folder"></use></svg>
+              <input id="dir-input" name="path" type="text" list="recent-paths" placeholder="/home/you/Downloads" autocomplete="off" spellcheck="false" aria-describedby="scan-status">
+              <button class="mini-btn" id="use-downloads" type="button">Downloads</button>
+            </div>
+            <datalist id="recent-paths"></datalist>
+            <button class="btn btn-primary scan-btn" id="scan-btn" type="submit">
+              <span class="btn-icon"><svg class="icon"><use href="#i-scan"></use></svg></span>
+              <span id="scan-btn-label">Scan files</span>
+            </button>
+          </div>
+          <div class="scan-foot">
+            <span id="scan-status" role="status" aria-live="polite">Nothing is scanned automatically.</span>
+            <span class="scan-mode">Preview mode · no files touched</span>
+          </div>
+        </form>
+
+        <div class="warning-banner" id="warning-banner" hidden></div>
+
+        <section class="stats" id="stats" aria-label="Scan summary" hidden>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-files">0</span>
+            <span class="stat-label">Files found</span>
+            <span class="stat-note" id="stat-files-note">in this folder</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-categories">0</span>
+            <span class="stat-label">Categories</span>
+            <span class="stat-note">detected by rules</span>
+          </div>
+          <div class="stat-card stat-accent">
+            <span class="stat-value" id="stat-proposed">0</span>
+            <span class="stat-label">Safe proposals</span>
+            <span class="stat-note">ready to review</span>
+          </div>
+          <div class="stat-card" id="stat-conflict-card">
+            <span class="stat-value" id="stat-conflicts">0</span>
+            <span class="stat-label">Conflicts</span>
+            <span class="stat-note">held back for safety</span>
+          </div>
+        </section>
+
+        <div class="workspace-grid">
+          <section class="panel files-panel" aria-labelledby="files-title">
+            <header class="panel-head">
+              <div>
+                <span class="eyebrow">Step 2</span>
+                <h3 id="files-title">Files in this folder</h3>
+              </div>
+              <span class="panel-count" id="files-count-label">—</span>
+            </header>
+
+            <div class="files-toolbar">
+              <label class="search-field" for="file-search">
+                <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+                <input id="file-search" type="search" placeholder="Search by name, path, or category" autocomplete="off">
+              </label>
+              <label class="select-field">
+                <span class="sr-only">Filter by category</span>
+                <select id="category-filter">
+                  <option value="all">All categories</option>
+                </select>
+                <svg class="icon" aria-hidden="true"><use href="#i-chevron"></use></svg>
+              </label>
+            </div>
+
+            <div class="files-body">
+              <div class="empty-state" id="files-empty">
+                <div class="empty-illustration" aria-hidden="true">
+                  <svg class="icon"><use href="#i-folder"></use></svg>
+                  <span class="empty-leaf"></span>
+                </div>
+                <h4>No folder scanned yet</h4>
+                <p>Pick a folder above. You will see every visible file and where it could go — before anything moves.</p>
+              </div>
+
+              <div class="loading-state" id="files-loading" hidden aria-label="Scanning files">
+                <div class="skeleton skeleton-row"></div>
+                <div class="skeleton skeleton-row"></div>
+                <div class="skeleton skeleton-row"></div>
+                <div class="skeleton skeleton-row"></div>
+                <div class="skeleton skeleton-row short"></div>
+              </div>
+
+              <div class="empty-state compact" id="files-no-results" hidden>
+                <h4>No files match this filter</h4>
+                <p>Try a different search term or category.</p>
+              </div>
+
+              <div class="table-scroll" id="file-table-wrap" hidden>
+                <table class="file-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">File</th>
+                      <th scope="col">Category</th>
+                      <th scope="col" class="col-size">Size</th>
+                      <th scope="col">State</th>
+                    </tr>
+                  </thead>
+                  <tbody id="file-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <footer class="panel-foot" id="files-footer" hidden>
+              <span id="files-showing"></span>
+              <button class="text-btn" id="load-more-files" type="button" hidden>Show more files</button>
+            </footer>
+          </section>
+
+          <aside class="panel preview-panel" id="preview-panel" aria-labelledby="preview-title">
+            <header class="panel-head preview-head">
+              <div>
+                <span class="eyebrow">Step 3</span>
+                <h3 id="preview-title">Preview &amp; approve</h3>
+              </div>
+              <span class="preview-badge">Preview only</span>
+            </header>
+
+            <div class="empty-state preview-empty" id="preview-empty">
+              <div class="empty-illustration small" aria-hidden="true">
+                <svg class="icon"><use href="#i-shield"></use></svg>
+              </div>
+              <h4>Nothing moves until you say so</h4>
+              <p>After a scan, proposed moves appear here with a reason and a checkbox. Review them one by one.</p>
+            </div>
+
+            <div class="loading-state" id="preview-loading" hidden aria-label="Preparing preview">
+              <div class="skeleton skeleton-suggestion"></div>
+              <div class="skeleton skeleton-suggestion"></div>
+              <div class="skeleton skeleton-suggestion"></div>
+            </div>
+
+            <div class="preview-body" id="preview-body" hidden>
+              <div class="preview-note" id="preview-note">
+                <svg class="icon" aria-hidden="true"><use href="#i-shield"></use></svg>
+                <span>Nothing has moved. Dry run is on by default.</span>
+              </div>
+
+              <div class="preview-tools">
+                <button class="text-btn" id="preview-select-all" type="button">Select all safe</button>
+                <button class="text-btn" id="preview-clear" type="button">Clear</button>
+                <span class="toolbar-spacer"></span>
+                <button class="btn btn-ghost ai-btn" id="ai-enhance-btn" type="button" disabled>
+                  <svg class="icon"><use href="#i-sparkles"></use></svg>
+                  <span id="ai-enhance-label">Enhance with AI</span>
+                </button>
+              </div>
+
+              <div class="preview-status" id="preview-status" role="status" aria-live="polite" hidden></div>
+              <div class="apply-result" id="apply-result" role="status" aria-live="polite" hidden></div>
+
+              <div class="suggestion-list" id="preview-list"></div>
+              <div class="preview-list-foot" id="preview-list-foot" hidden>
+                <span id="suggestions-showing"></span>
+                <button class="text-btn" id="load-more-suggestions" type="button">Show more</button>
+              </div>
+
+              <footer class="preview-footer">
+                <div class="preview-selection">
+                  <strong id="selected-count">0 selected</strong>
+                  <span>of <span id="selectable-count">0</span> safe moves</span>
+                </div>
+                <label class="switch-row" for="dry-run-toggle">
+                  <span class="switch">
+                    <input id="dry-run-toggle" type="checkbox" checked>
+                    <span class="switch-track"></span>
+                  </span>
+                  <span>Dry run</span>
+                  <span class="switch-hint" id="switch-hint">Simulate only</span>
+                </label>
+                <button class="btn btn-primary btn-block" id="apply-btn" type="button" disabled>
+                  <span id="apply-btn-label">Simulate moves</span>
+                </button>
+                <p class="preview-caption">No deletes. No overwrites. Every real apply can be undone from Activity.</p>
+              </footer>
+            </div>
+          </aside>
+        </div>
+
+        <footer class="page-foot">
+          <span><svg class="icon"><use href="#i-lock"></use></svg> Runs entirely on this machine.</span>
+          <span>LazyFile v<span id="version-label">1.0.0</span></span>
+        </footer>
+      </section>
+
+      <section class="view" id="view-activity" hidden>
+        <div class="view-heading">
+          <span class="eyebrow">History</span>
+          <h2>Activity log</h2>
+          <p>Every real apply is journaled. When it is safe, you can move those files back.</p>
+        </div>
+        <div class="activity-toolbar">
+          <span id="activity-log-note">Loading operations…</span>
+          <button class="btn btn-ghost" id="activity-refresh" type="button">
+            <svg class="icon"><use href="#i-refresh"></use></svg>
+            Refresh
+          </button>
+        </div>
+        <div class="loading-state" id="activity-loading" hidden>
+          <div class="skeleton skeleton-activity"></div>
+          <div class="skeleton skeleton-activity"></div>
+        </div>
+        <div class="activity-list" id="activity-list"></div>
+        <div class="empty-state" id="activity-empty" hidden>
+          <div class="empty-illustration small" aria-hidden="true">
+            <svg class="icon"><use href="#i-activity"></use></svg>
+          </div>
+          <h4>No organization runs yet</h4>
+          <p>After you apply a preview, the operation will appear here with an undo option.</p>
+        </div>
+      </section>
+
+      <section class="view" id="view-safety" hidden>
+        <div class="view-heading">
+          <span class="eyebrow">Safety model</span>
+          <h2>The cautious part is the feature.</h2>
+          <p>LazyFile is designed for the moment after a mistake. These rules are enforced in the backend, not just the interface.</p>
+        </div>
+        <div class="safety-grid">
+          <article class="safety-card">
+            <span class="safety-icon"><svg class="icon"><use href="#i-shield"></use></svg></span>
+            <h3>Preview is mandatory</h3>
+            <p>Scanning and previewing are read-only. A move requires a separate, explicit apply request with selected suggestion IDs.</p>
+          </article>
+          <article class="safety-card">
+            <span class="safety-icon"><svg class="icon"><use href="#i-folder"></use></svg></span>
+            <h3>One folder at a time</h3>
+            <p>Only the folder you enter is scanned. Hidden files and folders are skipped by default, and symbolic links are never followed.</p>
+          </article>
+          <article class="safety-card">
+            <span class="safety-icon"><svg class="icon"><use href="#i-check"></use></svg></span>
+            <h3>No deletes, no overwrites</h3>
+            <p>Every destination is checked again at apply time. Moves use no-overwrite primitives, and collisions are held back with a visible warning.</p>
+          </article>
+          <article class="safety-card">
+            <span class="safety-icon"><svg class="icon"><use href="#i-undo"></use></svg></span>
+            <h3>Journaled and undoable</h3>
+            <p>Completed moves are written to a local JSONL journal. Undo only restores files whose destination still matches the recorded fingerprint.</p>
+          </article>
+          <article class="safety-card">
+            <span class="safety-icon"><svg class="icon"><use href="#i-sparkles"></use></svg></span>
+            <h3>AI output is untrusted</h3>
+            <p>Only file names, extensions, and sizes are sent locally. Model JSON is validated; ids, paths, categories, and extensions are checked before use.</p>
+          </article>
+          <article class="safety-card">
+            <span class="safety-icon"><svg class="icon"><use href="#i-lock"></use></svg></span>
+            <h3>Local by default</h3>
+            <p>The dashboard is served on localhost. There are no analytics, cloud calls, CDNs, databases, or third-party Python packages.</p>
+          </article>
+        </div>
+      </section>
+
+      <footer class="page-foot mobile-foot">
+        <span>LazyFile · local-first organization</span>
+        <span>Slow and steady.</span>
+      </footer>
+    </main>
+  </div>
+
+  <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="false"></div>
+
+  <div class="modal-backdrop" id="modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-body">
+      <div class="modal-head">
+        <h3 id="modal-title">Confirm</h3>
+        <button class="icon-btn" id="modal-close" type="button" aria-label="Close dialog">
+          <svg class="icon"><use href="#i-x"></use></svg>
+        </button>
+      </div>
+      <p id="modal-body"></p>
+      <div class="modal-note">
+        <svg class="icon" aria-hidden="true"><use href="#i-shield"></use></svg>
+        <span id="modal-note-text">Nothing will be deleted or overwritten.</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="modal-cancel" type="button">Cancel</button>
+        <button class="btn btn-primary" id="modal-confirm" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
